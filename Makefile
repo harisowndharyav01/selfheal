@@ -2,20 +2,26 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=selfheal
 PKG_VERSION:=1.0
+SHORT_DESCRIPTION:=Implementation of self-healing mechanisms for system stability
 PKG_RELEASE:=1
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/selfheal-v0.1.0
+PKG_MAINTAINER:=Soft At Home <support.opensource@softathome.com>
+PKG_LICENSE:=BSD-2-Clause-Patent
+PKG_LICENSE_FILES:=LICENSE
+
 COMPONENT:=selfheal
-SHORT_DESCRIPTION:=Self-heal feature for system stability
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v0.$(PKG_VERSION)
-SOURCE_DIR:=$(CURDIR)/src
+
+SOURCE_DIR:=$(TOPDIR)/custom_files/selfheal
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/package/tinno/tinno.mk
 
 define Package/selfheal
-	SECTION:=tinno
-	CATEGORY:=$(TINNO_SOFTWARE_CATEGORY)
-	SUBMENU:=$(TINNO_APPLICATIONS)
+	SECTION:=examples
+	CATEGORY:=Examples
+	SUBMENU:=Plugins
 	TITLE:=$(SHORT_DESCRIPTION)
+	URL:=https://gitlab.com/prpl-foundation/components/core/plugins/selfheal
 	DEPENDS += +libamxc +libamxp +libamxd +libamxo +amxrt +libsahtrace
 	MENU:=1
 endef
@@ -98,4 +104,3 @@ define Package/$(PKG_NAME)/config
 endef
 
 $(eval $(call BuildPackage,selfheal))
-
