@@ -1,48 +1,101 @@
-# check pre-requisites
-EXECUTABLES = install strip ln tar $(CC) $(AR) mkdir git echo cat
-K := $(foreach exec,$(EXECUTABLES),\
-        $(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH")))
+include $(TOPDIR)/rules.mk
 
-# tools used
-INSTALL = $(shell which install)
-STRIP = $(shell which strip)
-LN = $(shell which ln)
-TAR = $(shell which tar)
-MKDIR = $(shell which mkdir)
-GIT = $(shell which git)
-ECHO = $(shell which echo)
-CAT = $(shell which cat)
+PKG_NAME:=selfheal
+PKG_VERSION:=1.0
+PKG_RELEASE:=1
+COMPONENT:=selfheal
+SHORT_DESCRIPTION:=Self-heal feature for system stability
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v0.$(PKG_VERSION)
+SOURCE_DIR:=$(CURDIR)/src
 
-# the current version
-RAW_VERSION ?= $(if $(shell git describe --tags 2> /dev/null),$(shell git describe --tags),$(VERSION_PREFIX)v0.0.0)
-VERSION = $(if $(findstring .,$(RAW_VERSION)),$(subst $(VERSION_PREFIX)v,,$(strip $(RAW_VERSION))),$(strip $(RAW_VERSION)))
-VERSION_PARTS = $(if $(findstring .,$(RAW_VERSION)),$(subst ., ,$(VERSION)),0 0 0)
-VMAJOR = $(word 1,$(VERSION_PARTS))
-VMINOR = $(word 2,$(VERSION_PARTS))
-VBUILD_FULL = $(word 3,$(VERSION_PARTS))
-VBUILD = $(word 1,$(subst -, ,$(VBUILD_FULL)))
+include $(INCLUDE_DIR)/package.mk
+include $(TOPDIR)/package/tinno/tinno.mk
 
-# the processor architecture
-MACHINE ?= $(shell $(CC) -dumpmachine)
-CC_PARTS = $(subst -, ,$(CC))
-CC_NAME = $(word $(words $(CC_PARTS)),$(CC_PARTS))
+define Package/selfheal
+	SECTION:=tinno
+	CATEGORY:=$(TINNO_SOFTWARE_CATEGORY)
+	SUBMENU:=$(TINNO_APPLICATIONS)
+	TITLE:=$(SHORT_DESCRIPTION)
+	DEPENDS += +libamxc +libamxp +libamxd +libamxo +amxrt +libsahtrace
+	MENU:=1
+endef
 
-# Target
-COMPONENT = selfheal
-ifeq ($(CONFIG_GATEWAY)$(CONFIG_ACCESSPOINT),)
-CONFIG_GATEWAY=y
-endif
+define SAHInit/Install
+	install -d $(PKG_INSTALL_DIR)/etc/rc.d/
+	ln -sfr $(PKG_INSTALL_DIR)/etc/init.d/$(COMPONENT) $(PKG_INSTALL_DIR)/etc/rc.d/S$(CONFIG_SAH_AMX_SELFHEAL_ORDER)$(COMPONENT)
+	ln -sfr $(PKG_INSTALL_DIR)/etc/init.d/$(COMPONENT) $(PKG_INSTALL_DIR)/etc/rc.d/K$(CONFIG_SAH_AMX_SELFHEAL_ORDER)$(COMPONENT)
+endef
 
-# install directories
-PREFIX ?= /usr/
-LIBDIR ?= $(PREFIX)lib/$(MACHINE)
-BINDIR ?= $(PREFIX)bin
-INCLUDEDIR ?= $(PREFIX)include
-INITDIR ?= /etc/init.d
-ACLDIR ?= /etc/acl
-DOCDIR ?= $(PREFIX)share/doc/selfheal
-PROCMONDIR ?= $(PREFIX)lib/processmonitor/scripts
+define Package/$(PKG_NAME)/description
+	Implementation of self-healing mechanisms to ensure system stability and resilience.
+endef
 
-# default config options
-CONFIG_SAH_AMX_SELFHEAL_ORDER ?= 99
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+	cp -r $(SOURCE_DIR)/* $(PKG_BUILD_DIR)/
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default, \
+		STAGINGDIR=$(STAGING_DIR) \
+		CONFIGDIR=$(STAGING_DIR) \
+		PKG_CONFIG_PATH=$(STAGING_DIR)/usr/lib/pkgconfig \
+		LIBDIR=/usr/lib \
+		INSTALL_LIB_DIR=/lib \
+		INSTALL_BIN_DIR=/bin \
+		RAW_VERSION=$(PKG_VERSION) \
+		HARDCO_HAL_DIR=$(STAGING_DIR)/usr/include \
+		CONFIG_SAH_AMX_SELFHEAL_ORDER=$(CONFIG_SAH_AMX_SELFHEAL_ORDER))
+endef
+
+define Build/Install
+	$(call Build/Install/Default, \
+		install INSTALL=install D=$(PKG_INSTALL_DIR) \
+		DEST=$(PKG_INSTALL_DIR) \
+		STAGINGDIR=$(STAGING_DIR) \
+		CONFIGDIR=$(STAGING_DIR) \
+		PV=$(PKG_VERSION) \
+		PKG_CONFIG_LIBDIR=$(STAGING_DIR)/usr/lib/pkgconfig \
+		LIBDIR=/usr/lib \
+		INSTALL_LIB_DIR=/lib \
+		INSTALL_BIN_DIR=/bin \
+		RAW_VERSION=$(PKG_VERSION) \
+		HARDCO_HAL_DIR=$(STAGING_DIR)/usr/include \
+		CONFIG_SAH_AMX_SELFHEAL_ORDER=$(CONFIG_SAH_AMX_SELFHEAL_ORDER))
+	$(call SAHInit/Install)
+	@echo "Inside mypackage DEST(Build/Install):$(DEST)"
+endef
+
+define Build/InstallDev
+	$(call Build/Install/Default, \
+		install INSTALL=install D=$(STAGING_DIR) \
+		DEST=$(STAGING_DIR) \
+		STAGINGDIR=$(STAGING_DIR) \
+		CONFIGDIR=$(STAGING_DIR) \
+		PV=$(PKG_VERSION) \
+		PKG_CONFIG_LIBDIR=$(STAGING_DIR)/usr/lib/pkgconfig \
+		LIBDIR=/usr/lib \
+		INSTALL_LIB_DIR=/lib \
+		INSTALL_BIN_DIR=/bin \
+		RAW_VERSION=$(PKG_VERSION) \
+		HARDCO_HAL_DIR=$(STAGING_DIR)/usr/include \
+		CONFIG_SAH_AMX_SELFHEAL_ORDER=$(CONFIG_SAH_AMX_SELFHEAL_ORDER))
+	@echo "Inside mypackage DEST(Build/InstallDEV):$(DEST)"
+endef
+
+define Package/$(PKG_NAME)/install
+	$(CP) $(PKG_INSTALL_DIR)/* $(1)/
+	if [ -d ./files ]; then \
+		$(CP) ./files/* $(1)/; \
+	fi
+	find $(1) -name '*.a' -exec rm {} +;
+	find $(1) -name '*.h' -exec rm {} +;
+	find $(1) -name '*.pc' -exec rm {} +;
+endef
+
+define Package/$(PKG_NAME)/config
+	source "$(SOURCE)/Config.in"
+endef
+
+$(eval $(call BuildPackage,selfheal))
 
