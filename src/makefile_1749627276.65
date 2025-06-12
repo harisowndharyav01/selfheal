@@ -1,0 +1,54 @@
+include Makefile.inc
+
+NOW = $(shell date +"%Y-%m-%d(%H:%M:%S %z)")
+
+# Extra destination directories
+PKGDIR = ./output/pkg/
+
+# targets
+all:
+	$(MAKE) -C src all
+
+clean:
+	$(MAKE) -C src clean
+
+install: all
+	$(INSTALL) -D -p -m 0644 odl/selfheal.odl $(DEST)/etc/amx/selfheal/selfheal.odl
+	$(INSTALL) -D -p -m 0644 odl/selfheal_definition.odl $(DEST)/etc/amx/selfheal/selfheal_definition.odl
+	$(INSTALL) -D -p -m 0644 odl/selfheal_defaults.odl $(DEST)/etc/amx/selfheal/selfheal_defaults.odl
+	$(INSTALL) -D -p -m 0644 odl/selfheal_mapping.odl $(DEST)/etc/amx/tr181-device/extensions/01_device-selfheal_mapping.odl
+	$(INSTALL) -D -p -m 0644 output/object/selfheal.so $(DEST)/usr/lib/amx/selfheal/selfheal.so
+	$(INSTALL) -d -m 0755 $(DEST)$(BINDIR)
+	ln -sfr $(DEST)$(BINDIR)/amxrt $(DEST)$(BINDIR)/selfheal
+	$(INSTALL) -D -p -m 0755 scripts/selfheal.sh $(DEST)$(INITDIR)/selfheal
+	$(INSTALL) -D -p -m 0755 scripts/connectivity_test.sh $(DEST)$(INITDIR)/connectivity_test
+	$(INSTALL) -D -p -m 0755 scripts/cpu_monitor.sh $(DEST)$(INITDIR)/cpu_monitor
+	$(INSTALL) -D -p -m 0755 scripts/memory_monitor.sh $(DEST)$(INITDIR)/memory_monitor
+	$(INSTALL) -D -p -m 0755 scripts/thermal_monitor.sh $(DEST)$(INITDIR)/thermal_monitor
+
+package: all
+	$(INSTALL) -D -p -m 0644 odl/selfheal.odl $(PKGDIR)/etc/amx/selfheal/selfheal.odl
+	$(INSTALL) -D -p -m 0644 odl/selfheal_definition.odl $(PKGDIR)/etc/amx/selfheal/selfheal_definition.odl
+	$(INSTALL) -D -p -m 0644 odl/selfheal_defaults.odl $(PKGDIR)/etc/amx/selfheal/selfheal_defaults.odl
+	$(INSTALL) -D -p -m 0644 odl/selfheal_mapping.odl $(PKGDIR)/etc/amx/tr181-device/extensions/0_device-selfheal_mapping.odl
+	$(INSTALL) -D -p -m 0644 output/object/selfheal.so $(PKGDIR)/usr/lib/amx/selfheal/selfheal.so
+	$(INSTALL) -d -m 0755 $(PKGDIR)$(BINDIR)
+	rm -f $(PKGDIR)$(BINDIR)/selfheal
+	ln -sfr $(PKGDIR)$(BINDIR)/amxrt $(PKGDIR)$(BINDIR)/selfheal
+	$(INSTALL) -D -p -m 0755 scripts/selfheal.sh $(PKGDIR)$(INITDIR)/selfheal
+	$(INSTALL) -D -p -m 0755 scripts/connectivity_test.sh $(PKGDIR)$(INITDIR)/connectivity_test
+	$(INSTALL) -D -p -m 0755 scripts/cpu_monitor.sh $(PKGDIR)$(INITDIR)/cpu_monitor
+	$(INSTALL) -D -p -m 0755 scripts/memory_monitor.sh $(PKGDIR)$(INITDIR)/memory_monitor
+	$(INSTALL) -D -p -m 0755 scripts/thermal_monitor.sh $(PKGDIR)$(INITDIR)/thermal_monitor
+	cd $(PKGDIR) && $(TAR) -czvf ../selfheal-$(VERSION).tar.gz .
+	cp $(PKGDIR)../selfheal-$(VERSION).tar.gz .
+	make -C packages
+
+doc:
+	$(eval ODLFILES += odl/selfheal.odl)
+	$(eval ODLFILES += odl/selfheal_definition.odl)
+
+test:
+	$(MAKE) -C test run
+	$(MAKE) -C test coverage
+

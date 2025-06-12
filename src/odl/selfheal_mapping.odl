@@ -1,0 +1,4 @@
+%config {
+    %global "proxy-object.'Device.X_TINNO_Selfheal.'" = "X_TINNO_Selfheal.";
+}
+

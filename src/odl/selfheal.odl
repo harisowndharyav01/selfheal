@@ -1,0 +1,45 @@
+%config {
+    name = "selfheal";
+    storage-type = "odl";
+    storage-path = "${rw_data_path}/${name}";
+
+    import-dbg = true;
+
+    odl = {
+        load-dm-events = true,
+        dm-load = true,
+        dm-save = true,
+        dm-save-on-changed = true,
+        dm-save-delay = 1000,
+        directory = "${storage-path}/odl"
+    };
+
+    definition_file = "selfheal_definition.odl";
+    defaults_file = "selfheal_defaults.odl";
+
+    sahtrace = {
+        type = "syslog",
+        level = 500
+    };
+    trace-zones = [
+        "selfheal"
+    ];
+    pcm_svc_config = {
+        "Objects" = "X_TINNO_Selfheal"
+    };
+}
+
+#include "mod_sahtrace.odl";
+
+import "mod-dmext.so";
+import "selfheal.so" as selfheal;
+
+#include "mod_pcm_svc.odl";
+include "selfheal_definition.odl";
+include "selfheal_defaults.odl";
+
+%define {
+    entry-point selfheal.selfheal_main;
+}
+
+

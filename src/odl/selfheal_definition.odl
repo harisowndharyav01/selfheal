@@ -1,0 +1,109 @@
+%define {
+    %persistent object X_TINNO_Selfheal {
+        %persistent bool Enable {
+            userflags %upc;
+            default true;
+        }
+
+        %read-only string Status = "Enabled" {
+            on action validate call check_enum
+                [ "Disabled", "Enabled", "Error" ];
+        }
+
+        %persistent uint32 ResourceMonitorRebootCountIn24hr = 5 {
+            userflags %upc;
+            on action validate call check_minimum 0;
+            on action validate call check_maximum 10;
+        }
+
+        void increment_cpu_reboot_count();
+        void increment_memory_reboot_count();
+        void increment_resource_monitor_reboot_count();
+
+        %persistent %read-only uint32 CpuRebootCount = 0 {
+            userflags %upc;
+            on action validate call check_maximum 5;
+        }
+
+        %persistent %read-only uint32 MemoryRebootCount = 0 {
+            userflags %upc;
+            on action validate call check_maximum 5;
+        }
+
+        %persistent uint32 AvgMemoryThreshold = 80 {
+            userflags %upc;
+            on action validate call check_minimum 1;
+            on action validate call check_maximum 100;
+        }
+
+        %persistent uint32 AvgCPUThreshold = 80 {
+            userflags %upc;
+            on action validate call check_minimum 1;
+            on action validate call check_maximum 100;
+        }
+
+        %persistent uint32 AvgTemperatureThreshold = 45 {
+            userflags %upc;
+            on action validate call check_minimum 1;
+            on action validate call check_maximum 100;
+        }
+
+        %persistent uint32 ResourceMonitorInterval = 900 {
+            userflags %upc;
+            on action validate call check_minimum 1;
+            on action validate call check_maximum 3600;
+        }
+
+        %persistent %read-only uint32 ResourceMonitorRebootCount = 0 {
+            userflags %upc;
+            on action validate call check_minimum 0;
+            on action validate call check_maximum 20;
+        }
+
+        %persistent uint32 PingTestRebootCountIn24Hr = 5 {
+            userflags %upc;
+            on action validate call check_minimum 0;
+            on action validate call check_maximum 5;
+        }
+
+        %persistent string IPv4PingServer = "" {
+            on action validate call selfheal_is_valid_ipv4;
+            userflags %usersetting;
+        }
+
+        %persistent string IPv6PingServer = "" {
+            on action validate call selfheal_is_valid_ipv6;
+            userflags %usersetting;
+        }
+
+        %persistent uint32 PingTestInterval = 900 {
+            userflags %upc;
+            on action validate call check_minimum 1;
+            on action validate call check_maximum 3600;
+        }
+
+        %persistent %read-only uint32 PingTestRebootCount = 0 {
+            userflags %upc;
+            on action validate call check_maximum 10;
+        }
+
+        void increment_pingTest_reboot_count();
+
+        %persistent object Reboot[] {
+            counted with RebootNumberOfEntries;
+
+            %persistent datetime Time;
+
+            %persistent string Reason {
+                on action validate call check_maximum_length 256;
+            }
+        }
+
+        void add_reboot_entry(string reason);
+    }
+}
+
+%populate {
+    on event "dm:object-changed" call set_status
+        filter 'path == "X_TINNO_Selfheal." && contains("parameters.Enable")';
+}

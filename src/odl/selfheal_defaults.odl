@@ -1,0 +1,6 @@
+%populate {
+    object X_TINNO_Selfheal {
+        parameter Enable = 1;
+    }
+}
+

@@ -1,0 +1,22 @@
+config PACKAGE_selfheal
+    tristate "Enable Selfheal"
+    select SAH_AMX_SELFHEAL
+
+if PACKAGE_selfheal
+
+menu "Selfheal Build Options"
+    depends on PACKAGE_selfheal
+
+config SAH_AMX_SELFHEAL
+    bool "Build Selfheal itself"
+    default y
+
+config SAH_AMX_SELFHEAL_ORDER
+    int "Start up order for the Selfheal plugin"
+    default 50
+
+endmenu
+
+endif
+
+
